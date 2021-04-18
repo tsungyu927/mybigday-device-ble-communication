@@ -9,13 +9,14 @@ const {
   setDeviceId,
   setDeviceName,
 } = require('./util')
+const em = require('./emitter')
+const emitter = em.emitter
 
 const bleStart = manager => {
   return new Promise((resolve, reject) => {
     setBleManager(manager)
     try {
       bleManager.onStateChange(state => {
-        console.log(state)
         switch (state) {
           case 'PoweredOn':
             console.log('PoweredOn')
@@ -38,13 +39,13 @@ const startDeviceScan = (uuid, name) => {
     try {
       console.log('startDeviceScan')
       bleManager.startDeviceScan(
-        [serviceUUID],
-        { allowDuplicates: false },
+        [uuid],
+        {allowDuplicates: false},
         (error, device) => {
           if (error) {
             console.error(error)
           } else {
-            if (device.name === deviceName) {
+            if (device.name === name) {
               resolve(addDevice(device))
             }
           }
@@ -72,8 +73,9 @@ const addDevice = async device => {
 
     // ==============================
     // 停止掃描
-    stopDeviceScan()
-    return deviceObj
+    await stopDeviceScan()
+    // ===============================
+    emitter.emit('startScan', deviceObj)
   }
 }
 const establishConnect = async () => {
@@ -84,7 +86,15 @@ const establishConnect = async () => {
     console.log(err.reason)
   }
   // 確認連線
-  return await checkIsConnected()
+  let isConnected = await bleManager.isDeviceConnected(deviceId)
+  if (isConnected) {
+    emitter.emit('connect')
+
+    // 監聽disconnect事件
+    bleManager.onDeviceDisconnected(deviceId, () => {
+      emitter.emit('disconnect')
+    })
+  }
 }
 
 const cancelConnection = async () => {
@@ -97,28 +107,29 @@ const cancelConnection = async () => {
   // 將資料清空 (除了bleManager)
   setServiceUUID('')
   setDeviceId('')
+  emitter.emit('disconnect')
   // =========================
-  return await checkIsConnected()
+  // return await checkIsConnected()
 }
 
 const checkIsConnected = async () => {
   return await bleManager.isDeviceConnected(deviceId)
 }
 
-const stopDeviceScan = () => {
+const stopDeviceScan = async () => {
   console.log('stopDeviceScan')
-  bleManager.stopDeviceScan()
+  await bleManager.stopDeviceScan()
 }
 
-const readCharacteristic = async () => {
+const readCharacteristic = async characteristicUuid => {
   return await bleManager.readCharacteristicForDevice(
     deviceId,
     serviceUUID,
-    '2a27',
+    characteristicUuid,
   )
 }
 
-const writeCharacteristic = async value => {
+const writeCharacteristic = async (characteristicUuid, value) => {
   // Convert value to base64
   const base64Value = Buffer.from(value).toString('base64')
   console.log(`Device is connected: ${await checkIsConnected()}`)
@@ -127,10 +138,10 @@ const writeCharacteristic = async value => {
   await bleManager.writeCharacteristicWithResponseForDevice(
     deviceId,
     serviceUUID,
-    '2a27',
+    characteristicUuid,
     base64Value,
   )
-  const result = await readCharacteristic()
+  const result = await readCharacteristic(characteristicUuid)
   // 確認寫入成功 透過讀取目前的特徵值和原本想寫入的值是否相同來判斷
   if (result.value === base64Value) {
     return true

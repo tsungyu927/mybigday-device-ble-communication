@@ -1,11 +1,13 @@
 const { PushPasscodeToArray } = require('./getPasscode.js')
+const em = require('./emitter')
+const emitter = em.emitter
 
-const CharacteristicWithBleno = (bleno) => {
+const CharacteristicWithBleno = (bleno, characteristicUuid) => {
 
   class Characteristic extends bleno.Characteristic {
     constructor() {
       super({
-        uuid: '2a27',
+        uuid: characteristicUuid,
         properties: ['read', 'write', 'notify'],
         value: null
       })
@@ -29,6 +31,8 @@ const CharacteristicWithBleno = (bleno) => {
       // ================================
       // Push Passcode to array (wait to print)
       PushPasscodeToArray(this._value.toString('utf8'))
+      // trigger emitter
+      emitter.emit('characterChange', this.uuid, this._value.toString('utf8'))
       // ================================
       callback(this.RESULT_SUCCESS)
     }

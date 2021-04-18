@@ -1,5 +1,5 @@
 {
-  "name": "mybigday-passcode-ble",
+  "name": "mybigday-device-ble-communication",
   "version": "1.0.0",
   "description": "mybigday passcode ble with central and peripheral, using react-native-ble-plx(central) and  @abandonware/bleno(peripheral)",
   "main": "index.js",

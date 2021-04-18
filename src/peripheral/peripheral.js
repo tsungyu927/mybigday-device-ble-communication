@@ -1,6 +1,11 @@
 const CharacteristicWithBleno = require('./characteristics.js')
+const em = require('./emitter')
+const emitter = em.emitter
 
-module.exports = function blenoStart(bleno, name, serviceUuids) {
+const characteristicUuid = '2a27'
+const temp = '2a28'
+
+module.exports = function startAdvertising(bleno, name, serviceUuids) {
 
   bleno.on('stateChange', function (state) {
     console.log('on -> stateChange: ' + state)
@@ -17,12 +22,24 @@ module.exports = function blenoStart(bleno, name, serviceUuids) {
     if (!error) {
       bleno.setServices([
         new bleno.PrimaryService({
-          uuid: '2a27',
+          uuid: serviceUuids,
           characteristics: [
-            CharacteristicWithBleno(bleno)
+            CharacteristicWithBleno(bleno, characteristicUuid),
           ]
         })
       ])
     }
+  })
+  // ==========================================
+  // not available on OS X 10.9
+  bleno.on('accept', function (clientAddr) {
+    // console.log(`accept: ${clientAddr}`)
+    emitter.emit('connectionChange', 'connected......')
+  })
+
+  // ==========================================
+  // Linux only
+  bleno.on('disconnect', function () {
+    emitter.emit('connectionChange', 'disconnect')
   })
 }
