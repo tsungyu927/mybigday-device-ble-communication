@@ -5,7 +5,7 @@ const emitter = em.emitter
 const characteristicUuid = '2a27'
 const temp = '2a28'
 
-module.exports = function startAdvertising(bleno, name, serviceUuids) {
+module.exports = function startAdvertising(bleno, name, serviceUuids, characteristicUuids) {
 
   bleno.on('stateChange', function (state) {
     console.log('on -> stateChange: ' + state)
@@ -23,9 +23,9 @@ module.exports = function startAdvertising(bleno, name, serviceUuids) {
       bleno.setServices([
         new bleno.PrimaryService({
           uuid: serviceUuids,
-          characteristics: [
-            CharacteristicWithBleno(bleno, characteristicUuid),
-          ]
+          characteristics: characteristicUuids.map((value) => {
+            return CharacteristicWithBleno(bleno, value)
+          })
         })
       ])
     }

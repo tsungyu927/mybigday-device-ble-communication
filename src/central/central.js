@@ -81,22 +81,25 @@ const addDevice = async device => {
 const establishConnect = async () => {
   // 建立連線
   try {
-    await bleManager.connectToDevice(deviceId)
+    await bleManager.connectToDevice(deviceId, {
+      autoConnect: true,
+    })
   } catch (err) {
     console.log(err.reason)
   }
   // 確認連線
   let isConnected = await bleManager.isDeviceConnected(deviceId)
   if (isConnected) {
-    await bleManager.discoverAllServicesAndCharacteristicsForDevice(deviceId)
     emitter.emit('connect')
-
-    // 監聽disconnect事件
-    bleManager.onDeviceDisconnected(deviceId, err => {
-      console.log(`error: ${err}`)
-      emitter.emit('disconnect')
-    })
   }
+
+  // 監聽disconnect事件
+  const disconnectListener = bleManager.onDeviceDisconnected(deviceId, err => {
+    console.log(`error: ${err}`)
+    // remove listener
+    disconnectListener.remove()
+    emitter.emit('disconnect')
+  })
 }
 
 const stopConnection = async () => {
@@ -140,6 +143,7 @@ const writeCharacteristic = async (characteristicUuid, value) => {
   const base64Value = Buffer.from(value).toString('base64')
   console.log(`Device is connected: ${await checkIsConnected()}`)
   // ============================
+  await bleManager.discoverAllServicesAndCharacteristicsForDevice(deviceId)
   await bleManager.writeCharacteristicWithResponseForDevice(
     deviceId,
     serviceUUID,
