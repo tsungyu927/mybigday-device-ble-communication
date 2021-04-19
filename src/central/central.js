@@ -88,6 +88,7 @@ const establishConnect = async () => {
   // 確認連線
   let isConnected = await bleManager.isDeviceConnected(deviceId)
   if (isConnected) {
+    await bleManager.discoverAllServicesAndCharacteristicsForDevice(deviceId)
     emitter.emit('connect')
 
     // 監聽disconnect事件
@@ -139,7 +140,6 @@ const writeCharacteristic = async (characteristicUuid, value) => {
   const base64Value = Buffer.from(value).toString('base64')
   console.log(`Device is connected: ${await checkIsConnected()}`)
   // ============================
-  await bleManager.discoverAllServicesAndCharacteristicsForDevice(deviceId)
   await bleManager.writeCharacteristicWithResponseForDevice(
     deviceId,
     serviceUUID,
