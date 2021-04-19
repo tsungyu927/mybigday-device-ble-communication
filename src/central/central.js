@@ -40,7 +40,7 @@ const startDeviceScan = (uuid, name) => {
       console.log('startDeviceScan')
       bleManager.startDeviceScan(
         [uuid],
-        {allowDuplicates: false},
+        { allowDuplicates: false },
         (error, device) => {
           if (error) {
             console.error(error)
@@ -91,13 +91,14 @@ const establishConnect = async () => {
     emitter.emit('connect')
 
     // 監聽disconnect事件
-    bleManager.onDeviceDisconnected(deviceId, () => {
+    bleManager.onDeviceDisconnected(deviceId, err => {
+      console.log(`error: ${err}`)
       emitter.emit('disconnect')
     })
   }
 }
 
-const cancelConnection = async () => {
+const stopConnection = async () => {
   // 終止連線
   try {
     await bleManager.cancelDeviceConnection(deviceId)
@@ -107,6 +108,10 @@ const cancelConnection = async () => {
   // 將資料清空 (除了bleManager)
   setServiceUUID('')
   setDeviceId('')
+}
+
+const cancelConnection = async () => {
+  // 手動觸發disconnect
   emitter.emit('disconnect')
   // =========================
   // return await checkIsConnected()
@@ -154,6 +159,7 @@ export {
   startDeviceScan,
   establishConnect,
   cancelConnection,
+  stopConnection,
   checkIsConnected,
   stopDeviceScan,
   readCharacteristic,

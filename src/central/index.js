@@ -5,6 +5,7 @@ const {
   startDeviceScan,
   establishConnect,
   cancelConnection,
+  stopConnection,
   checkIsConnected,
   stopDeviceScan,
   readCharacteristic,
@@ -28,6 +29,9 @@ function checkConnectinConnect(callback) {
 function checkConnectionDisconnect(callback) {
   emitter.once('disconnect', () => {
     console.log('is connected: false')
+    // 執行終止連線
+    stopConnection()
+    // 觸發callback
     callback()
   })
 }
