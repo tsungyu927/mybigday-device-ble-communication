@@ -40,7 +40,7 @@ const startDeviceScan = (uuid, name) => {
       console.log('startDeviceScan')
       bleManager.startDeviceScan(
         [uuid],
-        { allowDuplicates: false },
+        {allowDuplicates: false},
         (error, device) => {
           if (error) {
             console.error(error)

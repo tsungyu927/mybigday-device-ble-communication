@@ -13,7 +13,11 @@ const {
 } = require('./central')
 
 function startScan(callback, options) {
-  startDeviceScan(options.serviceUUID, options.deviceName)
+  startDeviceScan(
+    options.serviceUUID,
+    options.deviceName,
+    options.characteristicUUID,
+  )
   emitter.once('startScan', obj => {
     callback(obj)
   })
