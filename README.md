@@ -28,10 +28,10 @@
 | on     | Function | state, callback, [option] | ✓ | **state**: <br /> <ul><li>**startScan**: Start to scan</li><li>**connect**: connected success</li><li>**disconnect**: disconnected success</li></ul>| 
 | establishConnect | Function |  | ✓ | Connect to the device which had been discovered and matched |
 | stopDeviceScan | Function |  |  | Stop to scan for devices |
-| cancelConnection | Function |  |  | Stop connection |
+| cancelConnection | Function |  |  | Stop connection manually |
 | checkIsConnected | Function |  |  | Check connection status |
 | readCharacteristic | Function | characteristicUuid |  | Read **Characteristic** of peripheral which had benn connected and return it (whole object) |
-| writeCharacteristic | Function | characteristicUuid, value |  | Write **Value** to peripheral which had been connected |
+| writeCharacteristic | Function | characteristicUuid, value |  | Write **Value** to peripheral which had been connected, and get **true** if writing success, otherwise, return **false** |
 
 > Example  ( Central )
 ```javascript
@@ -43,47 +43,73 @@ const [bleManager] = useState(new BleManager())
 const bleCentral = ble.initialBle('central')
 
 // start bleManager 
-const bleStatePoweredOn = await bleCentral.bleStart(bleManager)
-if(bleStatePoweredOn){
-  // start scan
-  bleCentral.on('startScan', async obj => {
-      if (obj !== {}) {
-          // start to connect
-          await bleCentral.establishConnect()
-      }
-    },
-    {
-      // scan for specific device||serviceUUID
-      serviceUUID: serviceUUID,
-      deviceName: deviceName,
+useEffect(() => {
+  const linkBle = async () => {
+    const bleStatePoweredOn = await bleCentral.bleStart(bleManager)
+    if (bleStatePoweredOn) {
+      // 監聽scan
+      bleCentral.on(
+        'startScan',
+        async obj => {
+          await connectToPeripheral(obj)
+        },
+        {
+          serviceUUID: serviceUUID,
+          characteristicUUID: characteristicUuid,
+          deviceName: deviceName,
+        },
+      )
     }
-  )
-}
+  }
+  const connectToPeripheral = async obj => {
+    if (obj !== {}) {
+      // 建立連線 並 回傳連線狀態
+      await bleCentral.establishConnect()
+    }
+  }
+  linkBle()
+}, [])
 
-// listening to connection
-bleCentral.on('connect', () => {
-  // connected success
-  
-})
-// listening to disconnection
-bleCentral.on('disconnect', () => {
-  // disconnected success
+// 監聽連線狀態
+useEffect(() => {
+  // listening to connection
+  bleCentral.on('connect', () => {
+    // connection success
+    // 連線成功
 
-})
+  })
+}, [])
 
-// write characteristic 
-await bleCentral.writeCharacteristic(characteristicUuid ,txt.toString())
-await bleCentral.readCharacteristic(characteristicUuid)
+// 監聽斷線狀態
+useEffect(()=>{
+  // listening to disconnection
+  bleCentral.on('disconnect', () => {
+    // disconnected success
+    // 斷線成功
+  })  
+}, [])
+
+
+// write characteristic and get true if write success
+const result = await bleCentral.writeCharacteristic(characteristicUuid ,txt.toString())
+
+// read characteristic and get result return
+const result = await bleCentral.readCharacteristic(characteristicUuid)
 ```
 ----
 ### **Peripheral**
+#### **Warning**
+If central write the characteristic which is not existed in array(in getPasscode.js), value will be written in **"NOT EXIST"**.
+
 > Props
 
 | Prop  | Type | Param | Required | Description |
 | :------------ | :------:| :----:| :----:| :-----|
-| startAdvertising    | Function | bleno, name, serviceUuids | ✓ | Start **Broadcasting** if state is **poweredOn**  | 
-| getPasscodeArr      | Function |  |  | To get the **passcode array** which had been saved |
+| startAdvertising    | Function | bleno, name, serviceUuids, characteristicUuids | ✓ | Start **Broadcasting** if state is **poweredOn**  | 
+| getPasscodeArr      | Function |  |  | To get the **passcode array** which had been saved, this array is saved with checked passcode |
 | on     | Function | characterChange |  | Listening to Characteristic when central write the characteristic, return the **updated value** which has been written |
+| setCorrectPass      | Function | pass: (string) |  | Push passcode into corrected array which got from line@, and these passcode will be used to check whether the characteristic wrote by central is existed or not. |
+| getCorrectPassArr      | Function |  |  | To get the **correct passcode array** which had been saved |
 
 > Example ( Peripheral )
 ```javascript
@@ -92,12 +118,19 @@ const ble = require('mybigday-device-ble-communication')
 
 // initial by using peripheral as parameters
 const blePeripheral = ble.initialBle('peripheral')  
-blePeripheral.startAdvertising(bleno, name, serviceUuids)
+blePeripheral.startAdvertising(bleno, name, serviceUuids, characteristicUuids)
 
 // listening to character
 blePeripheral.on('characterChange', (characterUuid, value) => {
   // character changes
   console.log(`${characterUuid} change the value to: ${value}`)
 })
+
+// push newest correct passcode to check array
+blePeripheral.setCorrectPass('123456')
+
+// get correct passcode
+console.log(blePeripheral.getCorrectPassArr())
+
 ```
 

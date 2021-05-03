@@ -1,5 +1,6 @@
 const em = require('./emitter')
 const emitter = em.emitter
+const { getPasscodeArr, setCorrectPass, getCorrectPassArr } = require('./getPasscode')
 
 function listenToCharacter(callback) {
   emitter.on('characterChange', (characterUuid, value) => {
@@ -25,5 +26,7 @@ function on(state, callback) {
 module.exports = {
   on: on,
   startAdvertising: require('./peripheral.js'),
-  getPasscodeArr: require('./getPasscode.js'),
+  getPasscodeArr: getPasscodeArr,
+  setCorrectPass: setCorrectPass,
+  getCorrectPassArr: getCorrectPassArr
 }

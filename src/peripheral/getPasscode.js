@@ -1,12 +1,6 @@
 const _ = require('lodash')
 const passcodeArr = []
-const passFromInternet = [
-  '123456',
-  '987654',
-  '091284',
-  '112345',
-  '984374'
-]
+const passFromInternet = []
 
 const PushPasscodeToArray = (passcode) => {
   passcodeArr.push(passcode)
@@ -17,6 +11,14 @@ const getPasscodeArr = () => {
   return passcodeArr
 }
 
+const getCorrectPassArr = () => {
+  return passFromInternet
+}
+
+const setCorrectPass = (pass) => {
+  passFromInternet.push(pass)
+}
+
 const checkIsExist = (data) => {
   if (_.includes(passFromInternet, data)) {
     return true
@@ -24,4 +26,4 @@ const checkIsExist = (data) => {
   return false
 }
 
-module.exports = { PushPasscodeToArray, getPasscodeArr, checkIsExist }
+module.exports = { PushPasscodeToArray, getPasscodeArr, checkIsExist, setCorrectPass, getCorrectPassArr }
